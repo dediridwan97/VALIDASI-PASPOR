@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Cek & Validasi Paspor Umroh - ALMAZ TOUR (Mobile App)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <!-- Tesseract.js OCR Engine untuk Pemindaian Paspor / MRZ -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            almaz: {
+              gold: '#C58F2B',
+              goldLight: '#D4AF37',
+              goldDark: '#9E6F19',
+              champagne: '#FDFBF7',
+              cream: '#F9F3E5',
+              border: '#E6D5B0',
+              navy: '#121244',
+              navyDark: '#0B0B2B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Full-Screen Overlay menutupi seluruh elemen bawaan Blogger */
+    #umroh-app-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: radial-gradient(circle at center, #1B1B4B 0%, #090920 100%);
+      font-family: 'Inter', sans-serif;
+      color: #121244;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* Kontainer Khusus Layar HP (Mobile-Only Shell max 430px) */
+    #mobile-phone-shell {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100dvh;
+      background: linear-gradient(180deg, #FDFBF7 0%, #F8EFE0 100%);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(212, 175, 55, 0.35);
+      padding-bottom: 88px; /* Ruang untuk Sticky Bottom Bar */
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Gradasi Luxury Gold ALMAZ TOUR */
+    .bg-gold-gradient {
+      background: linear-gradient(135deg, #D4AF37 0%, #C58F2B 55%, #9E6F19 100%);
+    }
+    .bg-navy-gradient {
+      background: linear-gradient(135deg, #191959 0%, #121244 60%, #0B0B2B 100%);
+    }
+    .bg-gold-soft {
+      background: linear-gradient(135deg, #FFFDF9 0%, #F9F2E2 100%);
+    }
+    .shadow-gold-card {
+      box-shadow: 0 6px 20px -4px rgba(197, 143, 43, 0.16), 0 2px 6px -1px rgba(18, 18, 68, 0.05);
+    }
+
+    /* Animasi Garis Laser Scanner Paspor Gold */
+    @keyframes scanLaser {
+      0% { top: 8%; opacity: 0.9; }
+      50% { top: 86%; opacity: 1; }
+      100% { top: 8%; opacity: 0.9; }
+    }
+    .laser-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #C58F2B, #FDE047, #C58F2B, transparent);
+      box-shadow: 0 0 14px 3px rgba(212, 175, 55, 0.95);
+      animation: scanLaser 2.3s ease-in-out infinite;
+    }
+
+    /* Sembunyikan Scrollbar agar tampak seperti Native Mobile App */
+    #umroh-app-wrapper::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+
+    /* Pengaturan Cetak Bukti Validasi */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #print-certificate-area, #print-certificate-area * {
+        visibility: visible;
+      }
+      #print-certificate-area {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        box-shadow: none !important;
+        padding: 20px !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#090920] select-none">
+
+  <!-- Hidden Image untuk Thumbnail Postingan/Halaman Blogger -->
+  <div style="display:none;">
+    <img src="https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=800" alt="Aplikasi Validasi Paspor Umroh ALMAZ TOUR" />
+  </div>
+
+  <!-- WADAH UTAMA FULL SCREEN BLOGGER -->
+  <div id="umroh-app-wrapper">
+
+    <!-- FRAME KHUSUS HP (MOBILE-ONLY MAX 430PX) -->
+    <div id="mobile-phone-shell">
+
+      <!-- TOP BAR EMAS & NAVY -->
+      <div class="h-1.5 w-full bg-gradient-to-r from-[#121244] via-[#D4AF37] to-[#121244]"></div>
+
+      <!-- STICKY MOBILE APP HEADER ALMAZ TOUR -->
+      <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E6D5B0] px-4 py-3 shadow-xs">
+        <div class="flex items-center justify-between gap-2">
+          <!-- Logo Resmi ALMAZ TOUR -->
+          <div id="brand-logo-header" class="flex items-center gap-2.5">
+            <svg class="h-9 w-auto" viewBox="0 0 540 130" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="ALMAZ TOUR">
+              <path d="M18 39 C18 35, 50 18, 63 18 C76 18, 108 35, 108 39 L108 92 C108 95, 104 96, 101 94 C91 88, 72 79, 63 79 C54 79, 35 88, 25 94 C21 96, 18 94, 18 90 L18 66 C18 62, 51 45, 63 45 C75 45, 104 60, 104 60" stroke="#C58F2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 89 C32 81, 52 71, 63 71 C74 71, 94 81, 108 89" stroke="#C58F2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 105 C32 97, 55 91, 63 91 C71 91, 94 97, 110 105 L110 119 C94 111, 72 106, 63 106 C54 106, 32 111, 16 119 Z" fill="#121244"/>
+              <text x="132" y="92" fill="#121244" font-family="'Inter', sans-serif" font-weight="900" font-size="64" letter-spacing="1.5">ALMAZ</text>
+              <text x="382" y="91" fill="#121244" font-family="'Inter', sans-serif" font-weight="800" font-size="52" letter-spacing="1.5">TOUR</text>
+            </svg>
+          </div>
+
+          <!-- Badge & Tombol Reset Cepat -->
+          <div class="flex items-center gap-1.5">
+            <span id="connection-status-badge" class="text-[9px] font-extrabold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>MODE LIVE • TERHUBUNG KE SERVER</span>
+            </span>
+            <button type="button" onclick="resetValidationForm()" title="Reset Formulir" class="w-8 h-8 rounded-xl bg-rose-50 active:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center text-xs transition">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB SWITCHER MOBILE (AUTO SCAN vs INPUT MANUAL) -->
+        <div class="mt-3 grid grid-cols-2 gap-1.5 bg-[#121244] p-1 rounded-xl border border-[#C58F2B]/40">
+          <button type="button" onclick="switchMobileTab('scan')" id="tab-btn-scan" class="py-2 px-3 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition bg-gold-gradient text-white shadow-xs">
+            <i class="fa-solid fa-camera"></i>
+            <span>Auto Scan Paspor</span>
+          </button>
+          <button type="button" onclick="switchMobileTab('manual')" id="tab-btn-manual" class="py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition text-[#F4E6C6]">
+            <i class="fa-solid fa-keyboard"></i>
+            <span>Input Manual</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- KONTEN VERTIKAL KHUSUS HP -->
+      <main class="flex-1 px-3.5 pt-3.5 space-y-3.5">
+
+        <!-- KARTU 1: TANGGAL KEBERANGKATAN UMROH (SELALU TAMPIL DI ATAS) -->
+        <section class="bg-white rounded-2xl p-3.5 shadow-gold-card border border-[#E6D5B0] relative overflow-hidden">
+          <div class="absolute top-0 left-0 w-1 h-full bg-gold-gradient"></div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#9E6F19] flex items-center gap-1.5">
+              <i class="fa-solid fa-plane-departure text-[#C58F2B]"></i>
+              1. Tanggal Keberangkatan Umroh
+            </span>
+            <span class="text-[10px] font-semibold text-slate-400">Wajib ≥ 7 Bln</span>
+          </div>
+
+          <input type="date" id="form-tgl-keberangkatan" required onchange="calculateLiveValidity()" class="w-full rounded-xl border-2 border-[#C58F2B] bg-[#FFFDF9] px-3.5 py-2.5 text-sm font-extrabold text-[#121244] focus:outline-none" />
+
+          <!-- Pintasan Bulan Keberangkatan (Thumb-friendly) -->
+          <div class="grid grid-cols-4 gap-1.5 mt-2">
+            <button type="button" onclick="setQuickDeparture(0)" class="py-1.5 rounded-lg bg-[#F9F3E5] active:bg-[#E6D5B0] text-[#121244] border border-[#E6D5B0] text-[11px] font-bold">
+              Hari Ini
+            </button>
+            <button type="button" onclick="setQuickDeparture(1)" class="py-1.5 rounded-lg bg-[#F9F3E5] active:bg-[#E6D5B0] text-[#121244] border border-[#E6D5B0] text-[11px] font-bold">
+              +1 Bln
+            </button>
+            <button type="button" onclick="setQuickDeparture(3)" class="py-1.5 rounded-lg bg-[#F9F3E5] active:bg-[#E6D5B0] text-[#121244] border border-[#E6D5B0] text-[11px] font-bold">
+              +3 Bln
+            </button>
+            <button type="button" onclick="setQuickDeparture(6)" class="py-1.5 rounded-lg bg-[#F9F3E5] active:bg-[#E6D5B0] text-[#121244] border border-[#E6D5B0] text-[11px] font-bold">
+              +6 Bln
+            </button>
+          </div>
+        </section>
+
+        <!-- KARTU 2: STATUS HASIL VALIDASI REAL-TIME (LANGSUNG TERLIHAT DI LAYAR HP) -->
+        <section id="live-validation-card" class="rounded-2xl p-4 border-2 border-[#DFC690] bg-white shadow-gold-card space-y-3 transition-all">
+          <div class="flex items-center justify-between gap-2.5">
+            <div class="flex items-center gap-3">
+              <div id="live-status-icon" class="w-11 h-11 rounded-2xl bg-[#F9F3E5] text-[#C58F2B] border border-[#E6D5B0] flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-hourglass-half"></i>
+              </div>
+              <div>
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#9E6F19] block">Status Validasi Paspor</span>
+                <h2 id="live-status-title" class="text-sm font-black text-[#121244] leading-tight">
+                  Menunggu Data Paspor
+                </h2>
+              </div>
+            </div>
+
+            <div class="bg-[#F9F3E5] rounded-xl px-3 py-1.5 text-right border border-[#E6D5B0] shrink-0">
+              <span class="text-[9px] font-bold text-[#9E6F19] block uppercase">Sisa Masa Berlaku</span>
+              <span id="live-remaining-time" class="text-sm font-black font-mono-code text-[#121244]">- Bln - Hr</span>
+            </div>
+          </div>
+
+          <!-- Progress Bar Standar 7 Bulan -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-[10px] font-bold">
+              <span class="text-slate-500">Ambang Aman 7 Bulan</span>
+              <span id="progress-label-pct" class="text-[#9E6F19]">Belum dihitung</span>
+            </div>
+            <div class="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200 p-0.5">
+              <div id="validity-progress-bar" class="h-full rounded-full bg-gold-gradient transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Ringkasan 3 Indikator Kunci (Grid Kompak HP) -->
+          <div class="grid grid-cols-3 gap-2 text-[11px]">
+            <div class="p-2 rounded-xl bg-[#FDFBF7] border border-[#E6D5B0] text-center">
+              <span class="text-[9px] text-[#9E6F19] font-bold block">Min. Expired</span>
+              <strong id="info-min-expired" class="text-xs text-[#121244] font-extrabold block mt-0.5">-</strong>
+            </div>
+            <div class="p-2 rounded-xl bg-[#FDFBF7] border border-[#E6D5B0] text-center">
+              <span class="text-[9px] text-[#9E6F19] font-bold block">Batas Berangkat</span>
+              <strong id="info-max-departure" class="text-xs text-[#121244] font-extrabold block mt-0.5">-</strong>
+            </div>
+            <div class="p-2 rounded-xl bg-[#FDFBF7] border border-[#E6D5B0] text-center">
+              <span class="text-[9px] text-[#9E6F19] font-bold block">Suku Kata Nama</span>
+              <strong id="info-name-words" class="text-xs text-[#121244] font-extrabold block mt-0.5">-</strong>
+            </div>
+          </div>
+
+          <!-- Kotak Rekomendasi Singkat -->
+          <div id="live-recommendation-box" class="rounded-xl p-2.5 bg-[#F9F3E5] border border-[#E6D5B0] text-[11px] text-[#121244] leading-relaxed">
+            <i class="fa-solid fa-circle-info text-[#C58F2B] mr-1"></i>
+            <span id="live-recommendation-text">Scan foto paspor atau isi Tanggal Habis Berlaku untuk mengecek kelayakan keberangkatan umroh bersama <strong>ALMAZ TOUR</strong>.</span>
+          </div>
+        </section>
+
+        <!-- PANEL A: AUTO SCAN PASPOR (KAMERA HP / UPLOAD FOTO / MRZ) -->
+        <section id="panel-scan" class="bg-white rounded-2xl shadow-gold-card border border-[#E6D5B0] overflow-hidden">
+          <div class="bg-navy-gradient px-4 py-2.5 text-white flex items-center justify-between border-b border-[#C58F2B]">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-[#D4AF37] text-xs"></i>
+              <h3 class="font-extrabold text-xs tracking-wide">2. Auto Scan Paspor (Kamera HP / Foto)</h3>
+            </div>
+            <span class="text-[10px] bg-[#C58F2B] text-white font-bold px-2 py-0.5 rounded font-mono-code">OCR MRZ</span>
+          </div>
+
+          <div class="p-3.5 space-y-3">
+            <!-- Tombol Kamera Belakang HP & Upload Galeri -->
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" onclick="startCamera()" class="py-3 px-3 rounded-xl bg-gold-gradient active:opacity-90 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm">
+                <i class="fa-solid fa-camera text-sm"></i>
+                <span>Buka Kamera HP</span>
+              </button>
+              <label class="py-3 px-3 rounded-xl bg-[#121244] active:bg-[#1d1d68] text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                <i class="fa-solid fa-image text-[#D4AF37] text-sm"></i>
+                <span>Pilih Foto Paspor</span>
+                <input type="file" id="passport-file-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
+              </label>
+            </div>
+
+            <!-- Layar Pemindai Paspor -->
+            <div class="relative rounded-2xl bg-[#0B0B2B] aspect-[16/10] overflow-hidden border-2 border-[#C58F2B] flex items-center justify-center">
+              <div id="scanner-placeholder" class="text-center p-4 text-slate-300 space-y-1.5">
+                <div class="w-11 h-11 rounded-2xl bg-[#C58F2B]/20 border border-[#D4AF37]/40 flex items-center justify-center mx-auto text-[#D4AF37]">
+                  <i class="fa-solid fa-passport text-2xl"></i>
+                </div>
+                <p class="text-xs font-bold text-white">Foto Halaman Identitas Paspor</p>
+                <p class="text-[10px] text-slate-300">Pastikan 2 baris kode bawah (<code class="text-[#D4AF37] font-bold">P&lt;IDN...</code>) terlihat jelas</p>
+              </div>
+
+              <video id="camera-video" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+              <img id="passport-preview-img" class="hidden w-full h-full object-contain bg-slate-950" alt="Preview Paspor" />
+
+              <!-- Panduan Area MRZ -->
+              <div id="scanner-overlay-guide" class="hidden pointer-events-none absolute inset-0">
+                <div class="laser-line"></div>
+                <div class="absolute bottom-2.5 left-2.5 right-2.5 h-12 border-2 border-dashed border-[#D4AF37] rounded-lg bg-[#C58F2B]/20 flex items-center justify-center">
+                  <span class="text-[9px] font-mono-code font-bold uppercase tracking-wider text-[#FDE047] bg-[#0B0B2B]/90 px-2 py-0.5 rounded">
+                    Posisikan 2 Baris Kode Bawah Paspor di Sini
+                  </span>
+                </div>
+              </div>
+
+              <!-- Loading OCR -->
+              <div id="ocr-loading-overlay" class="hidden absolute inset-0 bg-[#0B0B2B]/90 flex flex-col items-center justify-center p-4 text-center">
+                <div class="w-8 h-8 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p id="ocr-status-text" class="text-xs font-bold text-white">Memindai Paspor...</p>
+                <div class="w-40 bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+                  <div id="ocr-progress-bar" class="bg-gold-gradient h-full transition-all duration-300" style="width: 20%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tombol Jepret Kamera -->
+            <div id="camera-capture-controls" class="hidden flex items-center gap-2">
+              <button type="button" onclick="captureCameraFrame()" class="flex-1 py-3 rounded-xl bg-emerald-600 active:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow">
+                <i class="fa-solid fa-camera-retro"></i> Jepret & Baca Paspor
+              </button>
+              <button type="button" onclick="stopCamera()" class="px-4 py-3 rounded-xl bg-rose-100 text-rose-700 font-bold text-xs">
+                Tutup
+              </button>
+            </div>
+
+            <!-- Tombol Uji Coba Simulasi Cepat di HP -->
+            <div class="bg-[#F9F3E5] border border-[#E6D5B0] rounded-xl p-2.5">
+              <span class="text-[10px] font-extrabold text-[#121244] flex items-center gap-1 mb-1.5">
+                <i class="fa-solid fa-bolt text-[#C58F2B]"></i> Coba Simulasi Auto Scan Cepat:
+              </span>
+              <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" onclick="loadSamplePassport('valid')" class="py-1.5 px-2 rounded-lg bg-emerald-700 active:bg-emerald-800 text-white text-[10px] font-bold text-center">
+                  ✓ Valid ≥7 Bln
+                </button>
+                <button type="button" onclick="loadSamplePassport('expired_soon')" class="py-1.5 px-2 rounded-lg bg-rose-700 active:bg-rose-800 text-white text-[10px] font-bold text-center">
+                  ✕ Kurang 7 Bln
+                </button>
+                <button type="button" onclick="loadSamplePassport('one_word')" class="py-1.5 px-2 rounded-lg bg-gold-gradient text-white text-[10px] font-bold text-center">
+                  1 Suku Kata
+                </button>
+              </div>
+            </div>
+
+            <!-- Input / Paste Baris MRZ -->
+            <details class="group bg-[#FDFBF7] rounded-xl border border-[#E6D5B0] p-2.5">
+              <summary class="text-[11px] font-extrabold text-[#121244] cursor-pointer flex items-center justify-between">
+                <span><i class="fa-solid fa-barcode text-[#C58F2B] mr-1.5"></i>Kode MRZ Paspor (Otomatis / Paste)</span>
+                <i class="fa-solid fa-chevron-down text-[10px] text-[#9E6F19] group-open:rotate-180 transition"></i>
+              </summary>
+              <div class="mt-2 space-y-1.5">
+                <textarea id="mrz-raw-input" rows="2" placeholder="P<IDNSANTOSO<<AHMAD<FAUZI<<<<<<<<<<<<<<<<<<<&#10;C8291045<6IDN8005148M2811254<<<<<<<<<<<<<<02" oninput="parseMRZFromTextarea()" class="w-full rounded-lg bg-[#0B0B2B] text-[#FDE047] font-mono-code text-[11px] p-2.5 border border-[#C58F2B] focus:outline-none tracking-wider"></textarea>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <!-- PANEL B: FORMULIR DATA PASPOR (OTOMATIS TERISI / INPUT MANUAL) -->
+        <section id="panel-manual" class="bg-white rounded-2xl shadow-gold-card border border-[#E6D5B0] overflow-hidden">
+          <div class="bg-gold-soft px-4 py-2.5 border-b border-[#E6D5B0] flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-gold-gradient"></span>
+              <h3 class="font-extrabold text-[#121244] text-xs">Detail Paspor Jemaah</h3>
+            </div>
+            <span id="word-count-indicator" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F9F3E5] text-[#9E6F19] border border-[#E6D5B0]">
+              0 Suku Kata
+            </span>
+          </div>
+
+          <div class="p-3.5 space-y-3">
+            <!-- Tanggal Habis Berlaku Paspor (Paling Penting, diletakkan di atas) -->
+            <div class="p-3 rounded-xl bg-[#F9F3E5]/70 border-2 border-[#C58F2B]">
+              <label class="block text-[11px] font-extrabold text-[#9E6F19] mb-1">
+                Tanggal Habis Berlaku Paspor (Date of Expiry) <span class="text-rose-600">*</span>
+              </label>
+              <input type="date" id="form-tgl-expired" required onchange="calculateLiveValidity()" class="w-full rounded-xl border border-[#DFC690] bg-white px-3 py-2.5 text-sm font-black text-[#121244] focus:outline-none" />
+            </div>
+
+            <!-- Nama Lengkap Jemaah -->
+            <div>
+              <label class="block text-[11px] font-extrabold text-[#121244] mb-1">
+                Nama Lengkap Jemaah (Sesuai Paspor)
+              </label>
+              <input type="text" id="form-nama-jemaah" placeholder="Contoh: AHMAD FAUZI SANTOSO" oninput="calculateLiveValidity()" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-3 py-2.5 text-xs font-extrabold uppercase text-[#121244] focus:outline-none" />
+            </div>
+
+            <!-- Nomor Paspor & Jenis Kelamin (2 Kolom Kompak HP) -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-extrabold text-[#121244] mb-1">
+                  Nomor Paspor
+                </label>
+                <input type="text" id="form-nomor-paspor" placeholder="C8291045" oninput="this.value = this.value.toUpperCase(); calculateLiveValidity();" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-3 py-2.5 text-xs font-mono-code font-bold uppercase text-[#121244] focus:outline-none" />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-extrabold text-[#121244] mb-1">
+                  Jenis Kelamin
+                </label>
+                <select id="form-jenis-kelamin" onchange="calculateLiveValidity()" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-2.5 py-2.5 text-xs font-bold text-[#121244] focus:outline-none">
+                  <option value="Laki-laki">Laki-laki (M)</option>
+                  <option value="Perempuan">Perempuan (F)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Tanggal Lahir & Tanggal Pengeluaran (Opsional) -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">
+                  Tgl Lahir (Opsional)
+                </label>
+                <input type="date" id="form-tgl-lahir" onchange="calculateLiveValidity()" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-2.5 py-2 text-xs font-semibold text-[#121244] focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">
+                  Tgl Terbit (Opsional)
+                </label>
+                <input type="date" id="form-tgl-pengeluaran" onchange="autoFillExpiryFromIssue()" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-2.5 py-2 text-xs font-semibold text-[#121244] focus:outline-none" />
+              </div>
+            </div>
+
+            <!-- Kantor Imigrasi -->
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 mb-1">
+                Kantor Imigrasi Penerbit / Catatan (Opsional)
+              </label>
+              <input type="text" id="form-kantor-imigrasi" placeholder="Contoh: KANIM JAKARTA SELATAN" oninput="calculateLiveValidity()" class="w-full rounded-xl border border-[#DFC690] bg-[#FFFDF9] px-3 py-2 text-xs font-semibold uppercase text-[#121244] focus:outline-none" />
+            </div>
+          </div>
+        </section>
+
+        <!-- FOOTER RINGKAS DALAM SHELL HP -->
+        <footer class="text-center py-3 text-[10px] text-slate-500">
+          <p class="font-bold text-[#121244]">© 2026 ALMAZ TOUR — Umroh & Haji Khusus</p>
+          <p>Standar Validasi Masa Berlaku Paspor ≥ 7 Bulan</p>
+        </footer>
+
+      </main>
+
+      <!-- STICKY BOTTOM ACTION BAR KHUSUS HP (MAX-WIDTH 430PX) -->
+      <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 bg-white/95 backdrop-blur-md border-t-2 border-[#DFC690] px-3 py-2.5 shadow-[0_-8px_25px_rgba(18,18,68,0.12)]">
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="copyResultToWhatsApp()" class="py-2.5 px-2 rounded-xl bg-[#121244] active:bg-[#1d1d66] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+            <i class="fa-brands fa-whatsapp text-[#D4AF37] text-sm"></i>
+            <span>Salin WA</span>
+          </button>
+
+          <button type="button" onclick="saveValidationCheckManual()" class="py-2.5 px-2 rounded-xl bg-[#F9F3E5] active:bg-[#E6D5B0] text-[#121244] border border-[#C58F2B] font-extrabold text-xs flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-cloud-arrow-up text-[#C58F2B]"></i>
+            <span>Simpan Log</span>
+          </button>
+
+          <button type="button" onclick="openCertificateModal()" class="py-2.5 px-2 rounded-xl bg-gold-gradient active:opacity-90 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-print"></i>
+            <span>Cetak PDF</span>
+          </button>
+        </div>
+      </nav>
+
+    </div>
+
+    <!-- MODAL BUKTI VALIDASI PASPOR (UKURAN MOBILE) -->
+    <div id="certificate-modal" class="hidden fixed inset-0 z-50 bg-[#0B0B2B]/80 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
+      <div class="bg-white rounded-2xl max-w-[400px] w-full shadow-2xl overflow-hidden border-2 border-[#C58F2B] my-4">
+        <div id="print-certificate-area" class="p-5 space-y-4">
+          <!-- Kop Resmi ALMAZ TOUR -->
+          <div class="border-b-2 border-[#C58F2B] pb-3 flex items-center justify-between gap-2">
+            <svg class="h-8 w-auto" viewBox="0 0 540 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 39 C18 35, 50 18, 63 18 C76 18, 108 35, 108 39 L108 92 C108 95, 104 96, 101 94 C91 88, 72 79, 63 79 C54 79, 35 88, 25 94 C21 96, 18 94, 18 90 L18 66 C18 62, 51 45, 63 45 C75 45, 104 60, 104 60" stroke="#C58F2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 89 C32 81, 52 71, 63 71 C74 71, 94 81, 108 89" stroke="#C58F2B" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 105 C32 97, 55 91, 63 91 C71 91, 94 97, 110 105 L110 119 C94 111, 72 106, 63 106 C54 106, 32 111, 16 119 Z" fill="#121244"/>
+              <text x="135" y="92" fill="#121244" font-family="'Inter', sans-serif" font-weight="900" font-size="64" letter-spacing="1.5">ALMAZ</text>
+              <text x="384" y="91" fill="#121244" font-family="'Inter', sans-serif" font-weight="800" font-size="52" letter-spacing="1.5">TOUR</text>
+            </svg>
+            <div class="text-right">
+              <span class="text-[9px] font-extrabold uppercase tracking-widest text-[#9E6F19] block">Verifikasi Paspor</span>
+              <h3 class="font-extrabold text-[#121244] text-[11px] uppercase">Bukti Validasi Umroh</h3>
+            </div>
+          </div>
+
+          <div id="cert-status-box" class="rounded-xl p-3 text-center border-2">
+            <p class="text-[10px] font-bold uppercase">Status Masa Berlaku (Min. 7 Bulan)</p>
+            <h2 id="cert-status-text" class="text-base font-black mt-0.5">VALID (LAYAK BERANGKAT)</h2>
+            <p id="cert-remaining-text" class="text-[11px] font-semibold mt-0.5">Sisa Masa Berlaku: -</p>
+          </div>
+
+          <div class="bg-[#FDFBF7] rounded-xl p-3.5 border border-[#E6D5B0] space-y-2 text-[11px]">
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Nama Jemaah:</span>
+              <span id="cert-nama" class="font-extrabold text-[#121244] uppercase text-right">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Suku Kata Nama:</span>
+              <span id="cert-kata" class="font-bold text-[#121244]">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">No. Paspor / Gender:</span>
+              <span id="cert-paspor" class="font-mono-code font-bold text-[#121244]">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Rencana Berangkat:</span>
+              <span id="cert-berangkat" class="font-extrabold text-[#9E6F19]">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Tgl Expired Paspor:</span>
+              <span id="cert-expired" class="font-extrabold text-[#121244]">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Batas Akhir Berangkat:</span>
+              <span id="cert-max-berangkat" class="font-bold text-[#121244]">-</span>
+            </div>
+            <div class="flex justify-between border-b border-[#E6D5B0]/60 pb-1">
+              <span class="text-slate-500">Kantor Imigrasi:</span>
+              <span id="cert-imigrasi" class="font-semibold text-[#121244] text-right">-</span>
+            </div>
+            <div class="pt-1">
+              <span class="text-slate-500 block mb-0.5">Kesimpulan:</span>
+              <p id="cert-catatan" class="font-medium text-slate-700 leading-snug">-</p>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-200">
+            <span id="cert-timestamp">-</span>
+            <span class="font-bold text-[#9E6F19]">ALMAZ TOUR</span>
+          </div>
+        </div>
+
+        <div class="bg-[#F9F3E5] px-4 py-3 flex items-center justify-end gap-2 no-print border-t border-[#E6D5B0]">
+          <button type="button" onclick="closeCertificateModal()" class="px-4 py-2 rounded-xl bg-white text-[#121244] text-xs font-bold border border-[#DFC690]">
+            Tutup
+          </button>
+          <button type="button" onclick="window.print()" class="px-4 py-2 rounded-xl bg-gold-gradient text-white text-xs font-extrabold flex items-center gap-1.5 shadow">
+            <i class="fa-solid fa-print"></i> Cetak / PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION MOBILE (DI ATAS LAYAR HP) -->
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 w-full max-w-[390px] px-3 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Canvas Tersembunyi untuk Capture Kamera -->
+    <canvas id="capture-canvas" class="hidden"></canvas>
+  </div>
+
+  <!-- ==========================================
+       SCRIPT LOGIKA VALIDASI PASPOR UMROH ALMAZ TOUR
+  =========================================== -->
+  <script>
+    // KONFIGURASI APLIKASI
+    // UBAH IS_PREVIEW KE false JIKA AKAN DI-DEPLOY KE BLOGGER
+    const IS_PREVIEW = false; 
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxiCRw2o-BIGSdbQQgx5AlSQkxO33BB1oJxiGSwXKYVH7dPicZ4ne60Rr9FCvE8tAUTZA/exec";
+    const LOGO_URL = "";
+
+    let mediaStream = null;
+    let lastEvaluation = null;
+
+    // Inisialisasi saat halaman dibuka
+    window.addEventListener("DOMContentLoaded", () => {
+      if (LOGO_URL && LOGO_URL.trim() !== "") {
+        const headerLogoBox = document.getElementById("brand-logo-header");
+        if (headerLogoBox) {
+          headerLogoBox.innerHTML = `<img src="${LOGO_URL}" alt="ALMAZ TOUR" class="h-9 w-auto object-contain" onerror="location.reload()" />`;
+        }
+      }
+
+      const statusBadge = document.getElementById("connection-status-badge");
+      if (statusBadge) {
+        if (!IS_PREVIEW && GAS_URL && GAS_URL.startsWith("https://")) {
+          statusBadge.className = "text-[9px] font-extrabold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center gap-1";
+          statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>MODE LIVE • TERHUBUNG KE SERVER</span>`;
+        } else {
+          statusBadge.className = "text-[9px] font-extrabold px-2 py-1 rounded-full bg-[#F9F3E5] text-[#9E6F19] border border-[#E6D5B0] flex items-center gap-1";
+          statusBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#C58F2B]"></span><span>MODE PREVIEW</span>`;
+        }
+      }
+
+      setQuickDeparture(0);
+    });
+
+    // Pintasan pengatur tanggal keberangkatan (+0 bulan, +1 bulan, +3 bulan, +6 bulan)
+    function setQuickDeparture(addMonths) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + addMonths);
+      document.getElementById("form-tgl-keberangkatan").value = d.toISOString().slice(0, 10);
+      calculateLiveValidity();
+    }
+
+    // Navigasi Tab Khusus HP (Auto Scan vs Input Manual)
+    function switchMobileTab(tab) {
+      const panelScan = document.getElementById("panel-scan");
+      const btnScan = document.getElementById("tab-btn-scan");
+      const btnManual = document.getElementById("tab-btn-manual");
+
+      if (tab === "scan") {
+        panelScan.classList.remove("hidden");
+        btnScan.className = "py-2 px-3 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition bg-gold-gradient text-white shadow-xs";
+        btnManual.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition text-[#F4E6C6]";
+      } else {
+        stopCamera();
+        panelScan.classList.add("hidden");
+        btnManual.className = "py-2 px-3 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition bg-gold-gradient text-white shadow-xs";
+        btnScan.className = "py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition text-[#F4E6C6]";
+        document.getElementById("form-tgl-expired").focus();
+      }
+    }
+
+    // ==========================================
+    // PERHITUNGAN MASA BERLAKU PASPOR (SYARAT MINIMAL 7 BULAN)
+    // ==========================================
+    function evaluatePassportValidity(departureDateStr, expiryDateStr, fullNameStr = "") {
+      const cleanedName = (fullNameStr || "").trim().replace(/\s+/g, " ");
+      const words = cleanedName ? cleanedName.split(" ") : [];
+      const wordCount = words.length;
+
+      let minExpiryDateStr = "-";
+      if (departureDateStr) {
+        const depD = new Date(departureDateStr + "T00:00:00");
+        depD.setMonth(depD.getMonth() + 7);
+        minExpiryDateStr = formatDateIndo(depD.toISOString().slice(0, 10));
+      }
+
+      let maxDepartureDateStr = "-";
+      if (expiryDateStr) {
+        const maxDepD = new Date(expiryDateStr + "T00:00:00");
+        maxDepD.setMonth(maxDepD.getMonth() - 7);
+        maxDepartureDateStr = formatDateIndo(maxDepD.toISOString().slice(0, 10));
+      }
+
+      if (!departureDateStr || !expiryDateStr) {
+        return {
+          ready: false,
+          isValid: false,
+          totalMonths: 0,
+          days: 0,
+          formattedRemaining: "- Bln - Hr",
+          minExpiryDateStr,
+          maxDepartureDateStr,
+          wordCount,
+          isNameTwoWords: wordCount >= 2,
+          autoNote: "Scan foto paspor atau isi Tanggal Habis Berlaku untuk mengecek kelayakan keberangkatan umroh bersama ALMAZ TOUR."
+        };
+      }
+
+      const depDate = new Date(departureDateStr + "T00:00:00");
+      const expDate = new Date(expiryDateStr + "T00:00:00");
+
+      const minExpDate = new Date(depDate.getTime());
+      minExpDate.setMonth(minExpDate.getMonth() + 7);
+
+      let years = expDate.getFullYear() - depDate.getFullYear();
+      let months = expDate.getMonth() - depDate.getMonth();
+      let days = expDate.getDate() - depDate.getDate();
+
+      let totalMonths = years * 12 + months;
+      if (days < 0) {
+        totalMonths -= 1;
+        const prevMonthLastDay = new Date(expDate.getFullYear(), expDate.getMonth(), 0).getDate();
+        days += prevMonthLastDay;
+      }
+
+      const isValidSevenMonths = expDate >= minExpDate && totalMonths >= 7;
+
+      let formattedRemaining = "";
+      if (expDate < depDate) {
+        formattedRemaining = `EXPIRED`;
+      } else {
+        formattedRemaining = `${totalMonths} Bln ${days} Hr`;
+      }
+
+      let notes = [];
+      if (isValidSevenMonths) {
+        notes.push(`VALID & LAYAK UMROH: Sisa masa berlaku paspor ${totalMonths} bulan ${days} hari saat keberangkatan (memenuhi syarat ≥ 7 bulan).`);
+      } else if (expDate < depDate) {
+        notes.push(`TIDAK VALID: Paspor sudah habis masa berlakunya sebelum tanggal keberangkatan. Wajib perpanjang paspor.`);
+      } else {
+        notes.push(`TIDAK VALID: Sisa masa berlaku hanya ${totalMonths} bulan ${days} hari saat keberangkatan (kurang dari 7 bulan). Wajib diperpanjang.`);
+      }
+
+      if (wordCount === 1) {
+        notes.push("Nama hanya 1 kata, disarankan tambah nama Ayah/Kakek (Endorsement) bila diminta maskapai.");
+      } else if (wordCount >= 2) {
+        notes.push(`Nama terdiri dari ${wordCount} suku kata (aman).`);
+      }
+
+      return {
+        ready: true,
+        isValid: isValidSevenMonths,
+        totalMonths,
+        days,
+        formattedRemaining,
+        minExpiryDateStr,
+        maxDepartureDateStr,
+        wordCount,
+        isNameTwoWords: wordCount >= 2,
+        autoNote: notes.join(" ")
+      };
+    }
+
+    function calculateLiveValidity() {
+      const depDate = document.getElementById("form-tgl-keberangkatan").value;
+      const expDate = document.getElementById("form-tgl-expired").value;
+      const fullName = document.getElementById("form-nama-jemaah").value;
+
+      const res = evaluatePassportValidity(depDate, expDate, fullName);
+      lastEvaluation = res;
+
+      const wordBadge = document.getElementById("word-count-indicator");
+      const infoNameWords = document.getElementById("info-name-words");
+
+      if (res.wordCount === 0) {
+        wordBadge.textContent = "0 Suku Kata";
+        wordBadge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F9F3E5] text-[#9E6F19] border border-[#E6D5B0]";
+        infoNameWords.textContent = "-";
+        infoNameWords.className = "text-xs text-[#121244] font-extrabold block mt-0.5";
+      } else if (res.wordCount === 1) {
+        wordBadge.textContent = "1 Kata (Endorse)";
+        wordBadge.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+        infoNameWords.textContent = "1 Kata (!)";
+        infoNameWords.className = "text-xs text-amber-700 font-extrabold block mt-0.5";
+      } else {
+        wordBadge.textContent = `${res.wordCount} Kata (Aman)`;
+        wordBadge.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+        infoNameWords.textContent = `${res.wordCount} Kata ✓`;
+        infoNameWords.className = "text-xs text-emerald-700 font-extrabold block mt-0.5";
+      }
+
+      document.getElementById("info-min-expired").textContent = res.minExpiryDateStr;
+      document.getElementById("info-max-departure").textContent = res.maxDepartureDateStr;
+
+      const card = document.getElementById("live-validation-card");
+      const icon = document.getElementById("live-status-icon");
+      const title = document.getElementById("live-status-title");
+      const remTime = document.getElementById("live-remaining-time");
+      const recBox = document.getElementById("live-recommendation-box");
+      const recText = document.getElementById("live-recommendation-text");
+      const progBar = document.getElementById("validity-progress-bar");
+      const progLabel = document.getElementById("progress-label-pct");
+
+      if (!res.ready) {
+        card.className = "rounded-2xl p-4 border-2 border-[#DFC690] bg-white shadow-gold-card space-y-3 transition-all";
+        icon.className = "w-11 h-11 rounded-2xl bg-[#F9F3E5] text-[#C58F2B] border border-[#E6D5B0] flex items-center justify-center text-xl shrink-0";
+        icon.innerHTML = `<i class="fa-solid fa-hourglass-half"></i>`;
+        title.textContent = "Menunggu Data Paspor";
+        title.className = "text-sm font-black text-[#121244] leading-tight";
+        remTime.textContent = "- Bln - Hr";
+        remTime.className = "text-sm font-black font-mono-code text-[#121244]";
+        recBox.className = "rounded-xl p-2.5 bg-[#F9F3E5] border border-[#E6D5B0] text-[11px] text-[#121244] leading-relaxed";
+        recText.textContent = res.autoNote;
+        progBar.style.width = "0%";
+        progLabel.textContent = "Belum dihitung";
+        return;
+      }
+
+      remTime.textContent = res.formattedRemaining;
+      recText.textContent = res.autoNote;
+
+      const pct = Math.max(6, Math.min(100, Math.round((res.totalMonths / 12) * 100)));
+      progBar.style.width = `${pct}%`;
+
+      if (res.isValid) {
+        card.className = "rounded-2xl p-4 border-2 border-emerald-600 bg-white shadow-gold-card space-y-3 transition-all";
+        icon.className = "w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs";
+        icon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+        title.textContent = "PASPOR VALID (LAYAK UMROH)";
+        title.className = "text-sm font-black text-emerald-700 leading-tight";
+        remTime.className = "text-sm font-black font-mono-code text-emerald-700";
+        recBox.className = "rounded-xl p-2.5 bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950 font-semibold leading-relaxed";
+        progBar.className = "h-full rounded-full bg-gradient-to-r from-emerald-600 to-[#C58F2B] transition-all duration-500";
+        progLabel.textContent = "Memenuhi Syarat (≥ 7 Bulan)";
+        progLabel.className = "text-emerald-700 font-extrabold";
+      } else {
+        card.className = "rounded-2xl p-4 border-2 border-rose-600 bg-white shadow-gold-card space-y-3 transition-all";
+        icon.className = "w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shrink-0 shadow-xs";
+        icon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+        title.textContent = "TIDAK VALID (< 7 BULAN)";
+        title.className = "text-sm font-black text-rose-600 leading-tight";
+        remTime.className = "text-sm font-black font-mono-code text-rose-600";
+        recBox.className = "rounded-xl p-2.5 bg-rose-50 border border-rose-200 text-[11px] text-rose-950 font-semibold leading-relaxed";
+        progBar.className = "h-full rounded-full bg-rose-600 transition-all duration-500";
+        progLabel.textContent = "Wajib Perpanjang Paspor";
+        progLabel.className = "text-rose-600 font-extrabold";
+      }
+    }
+
+    function autoFillExpiryFromIssue() {
+      const issueInput = document.getElementById("form-tgl-pengeluaran").value;
+      const expInput = document.getElementById("form-tgl-expired");
+      if (issueInput && !expInput.value) {
+        const d = new Date(issueInput + "T00:00:00");
+        d.setFullYear(d.getFullYear() + 5);
+        expInput.value = d.toISOString().slice(0, 10);
+        calculateLiveValidity();
+      }
+    }
+
+    // ==========================================
+    // AUTO SCAN PASPOR (MRZ PARSER & TESSERACT OCR)
+    // ==========================================
+    function parseMRZCode(rawText) {
+      if (!rawText) return null;
+
+      const lines = rawText
+        .toUpperCase()
+        .replace(/[^A-Z0-9<\n\r]/g, "")
+        .split(/[\r\n]+/)
+        .map(l => l.trim())
+        .filter(l => l.length >= 30 && l.includes("<"));
+
+      if (lines.length < 2) return null;
+
+      let line1 = lines[0];
+      let line2 = lines[1];
+      for (let i = 0; i < lines.length - 1; i++) {
+        if (lines[i].startsWith("P")) {
+          line1 = lines[i].padEnd(44, "<").slice(0, 44);
+          line2 = lines[i + 1].padEnd(44, "<").slice(0, 44);
+          break;
+        }
+      }
+
+      const nameSection = line1.slice(5);
+      const nameParts = nameSection.split("<<");
+      const surname = (nameParts[0] || "").replace(/</g, " ").trim();
+      const givenNames = (nameParts[1] || "").replace(/</g, " ").trim();
+      const fullName = `${givenNames} ${surname}`.replace(/\s+/g, " ").trim();
+
+      const passportNumber = line2.slice(0, 9).replace(/</g, "").trim();
+      const dobRaw = line2.slice(13, 19);
+      const birthDate = convertYYMMDDToDate(dobRaw, true);
+      const sexCode = line2.charAt(20);
+      const gender = sexCode === "F" ? "Perempuan" : "Laki-laki";
+      const expRaw = line2.slice(21, 27);
+      const expiryDate = convertYYMMDDToDate(expRaw, false);
+
+      return {
+        fullName: fullName || "",
+        passportNumber: passportNumber || "",
+        birthDate,
+        gender,
+        expiryDate
+      };
+    }
+
+    function convertYYMMDDToDate(yymmdd, isBirthDate) {
+      if (!/^\d{6}$/.test(yymmdd)) return "";
+      const yy = parseInt(yymmdd.slice(0, 2), 10);
+      const mm = yymmdd.slice(2, 4);
+      const dd = yymmdd.slice(4, 6);
+
+      const currentYearShort = new Date().getFullYear() % 100;
+      const fullYear = isBirthDate
+        ? (yy > currentYearShort ? 1900 + yy : 2000 + yy)
+        : 2000 + yy;
+      return `${fullYear}-${mm}-${dd}`;
+    }
+
+    function parseMRZFromTextarea() {
+      const raw = document.getElementById("mrz-raw-input").value;
+      const parsed = parseMRZCode(raw);
+      if (!parsed) return;
+
+      document.getElementById("form-nama-jemaah").value = parsed.fullName;
+      document.getElementById("form-nomor-paspor").value = parsed.passportNumber;
+      document.getElementById("form-jenis-kelamin").value = parsed.gender;
+      if (parsed.birthDate) document.getElementById("form-tgl-lahir").value = parsed.birthDate;
+      if (parsed.expiryDate) {
+        document.getElementById("form-tgl-expired").value = parsed.expiryDate;
+        const expD = new Date(parsed.expiryDate + "T00:00:00");
+        expD.setFullYear(expD.getFullYear() - 5);
+        document.getElementById("form-tgl-pengeluaran").value = expD.toISOString().slice(0, 10);
+      }
+
+      calculateLiveValidity();
+      logValidationToGAS(false);
+    }
+
+    function loadSamplePassport(type) {
+      stopCamera();
+      if (!document.getElementById("form-tgl-keberangkatan").value) {
+        setQuickDeparture(0);
+      }
+
+      let sampleMRZ = "";
+      if (type === "valid") {
+        sampleMRZ = "P<IDNHIDAYAT<<MUHAMMAD<RIZKY<<<<<<<<<<<<<<<<\nC9482710<4IDN8504129M2910186<<<<<<<<<<<<<<04";
+        document.getElementById("form-kantor-imigrasi").value = "KANIM KELAS I KHUSUS JAKARTA SELATAN";
+      } else if (type === "expired_soon") {
+        const depStr = document.getElementById("form-tgl-keberangkatan").value;
+        const d = new Date(depStr + "T00:00:00");
+        d.setMonth(d.getMonth() + 4);
+        const yy = String(d.getFullYear()).slice(-2);
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        sampleMRZ = `P<IDNRAHMAWATI<<SITI<NURHALIZA<<<<<<<<<<<<<<\nB3109482<1IDN7911035F${yy}${mm}${dd}2<<<<<<<<<<<<<<08`;
+        document.getElementById("form-kantor-imigrasi").value = "KANIM KELAS I SURABAYA";
+      } else if (type === "one_word") {
+        sampleMRZ = "P<IDNSUKARNO<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\nE5520198<9IDN7001011M3006205<<<<<<<<<<<<<<02";
+        document.getElementById("form-kantor-imigrasi").value = "KANIM KELAS I BANDUNG";
+      }
+
+      document.getElementById("mrz-raw-input").value = sampleMRZ;
+      parseMRZFromTextarea();
+      showToast("Simulasi Auto Scan Paspor berhasil!", "success");
+    }
+
+    async function startCamera() {
+      const video = document.getElementById("camera-video");
+      const placeholder = document.getElementById("scanner-placeholder");
+      const previewImg = document.getElementById("passport-preview-img");
+      const guide = document.getElementById("scanner-overlay-guide");
+      const controls = document.getElementById("camera-capture-controls");
+
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = mediaStream;
+        video.classList.remove("hidden");
+        placeholder.classList.add("hidden");
+        previewImg.classList.add("hidden");
+        guide.classList.remove("hidden");
+        controls.classList.remove("hidden");
+      } catch (err) {
+        showToast("Kamera tidak dapat diakses. Pilih Foto Paspor atau gunakan tombol Simulasi.", "error");
+      }
+    }
+
+    function stopCamera() {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+      }
+      document.getElementById("camera-video").classList.add("hidden");
+      document.getElementById("camera-capture-controls").classList.add("hidden");
+      document.getElementById("scanner-overlay-guide").classList.add("hidden");
+      if (document.getElementById("passport-preview-img").classList.contains("hidden")) {
+        document.getElementById("scanner-placeholder").classList.remove("hidden");
+      }
+    }
+
+    function captureCameraFrame() {
+      const video = document.getElementById("camera-video");
+      const canvas = document.getElementById("capture-canvas");
+      const previewImg = document.getElementById("passport-preview-img");
+
+      canvas.width = video.videoWidth || 800;
+      canvas.height = video.videoHeight || 500;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+      stopCamera();
+
+      previewImg.src = dataUrl;
+      previewImg.classList.remove("hidden");
+      document.getElementById("scanner-placeholder").classList.add("hidden");
+
+      runTesseractOCR(dataUrl);
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      stopCamera();
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const previewImg = document.getElementById("passport-preview-img");
+        previewImg.src = dataUrl;
+        previewImg.classList.remove("hidden");
+        document.getElementById("scanner-placeholder").classList.add("hidden");
+        runTesseractOCR(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function runTesseractOCR(imageSource) {
+      const loadingOverlay = document.getElementById("ocr-loading-overlay");
+      const statusText = document.getElementById("ocr-status-text");
+      const progressBar = document.getElementById("ocr-progress-bar");
+
+      loadingOverlay.classList.remove("hidden");
+      statusText.textContent = "Memindai kode MRZ paspor...";
+      progressBar.style.width = "20%";
+
+      try {
+        const result = await Tesseract.recognize(imageSource, "eng", {
+          logger: m => {
+            if (m.status === "recognizing text") {
+              const pct = Math.round((m.progress || 0.3) * 100);
+              progressBar.style.width = `${pct}%`;
+              statusText.textContent = `Membaca paspor (${pct}%)...`;
+            }
+          }
+        });
+
+        const rawText = result.data.text || "";
+        const mrzCandidate = extractMRZLinesFromOCRText(rawText);
+
+        if (mrzCandidate) {
+          document.getElementById("mrz-raw-input").value = mrzCandidate;
+          parseMRZFromTextarea();
+          showToast("Auto Scan berhasil membaca paspor!", "success");
+        } else {
+          showToast("Kode MRZ kurang jelas. Silakan isi Tgl Expired secara manual.", "info");
+        }
+      } catch (err) {
+        showToast("Gagal memindai foto paspor.", "error");
+      } finally {
+        loadingOverlay.classList.add("hidden");
+      }
+    }
+
+    function extractMRZLinesFromOCRText(ocrText) {
+      const cleanedLines = ocrText
+        .toUpperCase()
+        .split(/[\r\n]+/)
+        .map(line => line.replace(/\s+/g, "").replace(/[^A-Z0-9<]/g, ""))
+        .filter(line => line.length >= 28 && line.includes("<"));
+
+      if (cleanedLines.length >= 2) {
+        return cleanedLines.slice(-2).join("\n");
+      }
+      return null;
+    }
+
+    // ==========================================
+    // SALIN WA, SIMPAN LOG GAS & CETAK BUKTI RESMI ALMAZ TOUR
+    // ==========================================
+    function copyResultToWhatsApp() {
+      const depDate = document.getElementById("form-tgl-keberangkatan").value;
+      const expDate = document.getElementById("form-tgl-expired").value;
+      if (!depDate || !expDate) {
+        showToast("Isi Tanggal Berangkat & Tgl Expired Paspor dulu.", "error");
+        return;
+      }
+
+      const nama = document.getElementById("form-nama-jemaah").value.trim().toUpperCase() || "-";
+      const paspor = document.getElementById("form-nomor-paspor").value.trim().toUpperCase() || "-";
+      const imigrasi = document.getElementById("form-kantor-imigrasi").value.trim().toUpperCase() || "-";
+      const res = evaluatePassportValidity(depDate, expDate, nama);
+
+      const textWA = [
+        "*ALMAZ TOUR - HASIL VALIDASI PASPOR UMROH*",
+        "==========================================",
+        `• Nama Jemaah : *${nama}* (${res.wordCount} Kata)`,
+        `• Nomor Paspor : *${paspor}*`,
+        `• Kantor Imigrasi : *${imigrasi}*`,
+        `• Rencana Berangkat : *${formatDateIndo(depDate)}*`,
+        `• Tgl Expired Paspor : *${formatDateIndo(expDate)}*`,
+        `• Sisa Masa Berlaku : *${res.formattedRemaining}*`,
+        `• Batas Akhir Berangkat : *${res.maxDepartureDateStr}*`,
+        `• Status (Min. 7 Bln) : *${res.isValid ? "✅ VALID / LAYAK UMROH" : "❌ TIDAK VALID / PERPANJANG"}*`,
+        "==========================================",
+        `Kesimpulan: ${res.autoNote}`
+      ].join("\n");
+
+      const tempArea = document.createElement("textarea");
+      tempArea.value = textWA;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempArea);
+
+      showToast("Disalin! Siap ditempel ke WhatsApp.", "success");
+    }
+
+    function saveValidationCheckManual() {
+      const depDate = document.getElementById("form-tgl-keberangkatan").value;
+      const expDate = document.getElementById("form-tgl-expired").value;
+      if (!depDate || !expDate) {
+        showToast("Lengkapi Tgl Berangkat & Tgl Expired Paspor terlebih dahulu.", "error");
+        return;
+      }
+      logValidationToGAS(true);
+    }
+
+    async function logValidationToGAS(showFeedback = false) {
+      const depDate = document.getElementById("form-tgl-keberangkatan").value;
+      const expDate = document.getElementById("form-tgl-expired").value;
+      if (!depDate || !expDate) return;
+
+      const nama = document.getElementById("form-nama-jemaah").value.trim().toUpperCase() || "JEMAAH UMROH";
+      const paspor = document.getElementById("form-nomor-paspor").value.trim().toUpperCase() || "-";
+      const evalRes = evaluatePassportValidity(depDate, expDate, nama);
+
+      if (IS_PREVIEW || !GAS_URL || GAS_URL === "URL_DEPLOY_GAS_ANDA_DISINI") {
+        if (showFeedback) {
+          showToast("Mode Preview: Hasil validasi tercatat di sistem lokal.", "success");
+        }
+        return;
+      }
+
+      if (showFeedback) {
+        showToast("Menyimpan log validasi ke server ALMAZ TOUR...", "info");
+      }
+
+      try {
+        await fetch(GAS_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({
+            action: "logCheck",
+            payload: {
+              Timestamp: new Date().toLocaleString("id-ID"),
+              Nama_Jemaah: nama,
+              Nomor_Paspor: paspor,
+              Tanggal_Keberangkatan: depDate,
+              Tanggal_Habis_Berlaku: expDate,
+              Detail_Sisa_Waktu: evalRes.formattedRemaining,
+              Status_Validasi: evalRes.isValid ? "VALID" : "TIDAK VALID"
+            }
+          })
+        });
+        if (showFeedback) {
+          showToast("Berhasil disimpan ke Google Sheets ALMAZ TOUR!", "success");
+        }
+      } catch (e) {
+        if (showFeedback) {
+          showToast("Gagal terhubung ke server Google Sheets.", "error");
+        }
+      }
+    }
+
+    function openCertificateModal() {
+      const depDate = document.getElementById("form-tgl-keberangkatan").value;
+      const expDate = document.getElementById("form-tgl-expired").value;
+
+      if (!depDate || !expDate) {
+        showToast("Isi Tanggal Keberangkatan & Tanggal Expired Paspor dulu.", "error");
+        return;
+      }
+
+      const nama = document.getElementById("form-nama-jemaah").value.trim().toUpperCase() || "JEMAAH UMROH";
+      const paspor = document.getElementById("form-nomor-paspor").value.trim().toUpperCase() || "-";
+      const gender = document.getElementById("form-jenis-kelamin").value;
+      const imigrasi = document.getElementById("form-kantor-imigrasi").value.trim().toUpperCase() || "-";
+      const evalRes = evaluatePassportValidity(depDate, expDate, nama);
+
+      document.getElementById("cert-nama").textContent = nama;
+      document.getElementById("cert-kata").textContent = `${evalRes.wordCount} Suku Kata`;
+      document.getElementById("cert-paspor").textContent = `${paspor} (${gender})`;
+      document.getElementById("cert-berangkat").textContent = formatDateIndo(depDate);
+      document.getElementById("cert-expired").textContent = formatDateIndo(expDate);
+      document.getElementById("cert-max-berangkat").textContent = evalRes.maxDepartureDateStr;
+      document.getElementById("cert-imigrasi").textContent = imigrasi;
+      document.getElementById("cert-catatan").textContent = evalRes.autoNote;
+      document.getElementById("cert-timestamp").textContent = new Date().toLocaleString("id-ID");
+
+      const statusBox = document.getElementById("cert-status-box");
+      const statusText = document.getElementById("cert-status-text");
+      const remText = document.getElementById("cert-remaining-text");
+
+      remText.textContent = `Sisa Masa Berlaku Saat Berangkat: ${evalRes.formattedRemaining}`;
+
+      if (evalRes.isValid) {
+        statusBox.className = "rounded-xl p-3 text-center border-2 border-emerald-600 bg-emerald-50 text-emerald-900";
+        statusText.textContent = "VALID (LAYAK BERANGKAT UMROH)";
+      } else {
+        statusBox.className = "rounded-xl p-3 text-center border-2 border-rose-600 bg-rose-50 text-rose-900";
+        statusText.textContent = "TIDAK VALID (< 7 BULAN / PERPANJANG)";
+      }
+
+      document.getElementById("certificate-modal").classList.remove("hidden");
+    }
+
+    function closeCertificateModal() {
+      document.getElementById("certificate-modal").classList.add("hidden");
+    }
+
+    function resetValidationForm() {
+      document.getElementById("form-nama-jemaah").value = "";
+      document.getElementById("form-nomor-paspor").value = "";
+      document.getElementById("form-tgl-lahir").value = "";
+      document.getElementById("form-tgl-pengeluaran").value = "";
+      document.getElementById("form-tgl-expired").value = "";
+      document.getElementById("form-kantor-imigrasi").value = "";
+      document.getElementById("mrz-raw-input").value = "";
+      document.getElementById("passport-preview-img").classList.add("hidden");
+      document.getElementById("scanner-placeholder").classList.remove("hidden");
+      calculateLiveValidity();
+      showToast("Formulir direset.", "info");
+    }
+
+    function formatDateIndo(dateStr) {
+      if (!dateStr) return "-";
+      const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return dateStr;
+      const y = parts[0];
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      return `${d} ${months[m] || parts[1]} ${y}`;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const colors = {
+        success: "bg-[#121244] text-white border-[#C58F2B]",
+        error: "bg-rose-900 text-white border-rose-500",
+        info: "bg-[#121244] text-white border-[#D4AF37]"
+      };
+      const icons = {
+        success: "fa-circle-check text-[#D4AF37]",
+        error: "fa-circle-exclamation text-rose-300",
+        info: "fa-circle-info text-[#D4AF37]"
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-2 px-3.5 py-2.5 rounded-xl shadow-xl border-2 text-xs font-bold transition-all duration-300 ${colors[type] || colors.info}`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-sm shrink-0"></i><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+  </script>
+</body>
+</html>
