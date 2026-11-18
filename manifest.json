@@ -1,0 +1,18 @@
+{
+  "name": "Validasi Paspor Umroh - ALMAZ TOUR",
+  "short_name": "Paspor ALMAZ",
+  "description": "Aplikasi Cek & Validasi Masa Berlaku Paspor Umroh 7 Bulan ALMAZ TOUR",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121244",
+  "theme_color": "#121244",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%23121244'/><path d='M106 165 C106 150, 210 105, 256 105 C302 105, 406 150, 406 165 L406 310 C350 280, 285 255, 256 255 C227 255, 162 280, 106 310 Z' fill='none' stroke='%23D4AF37' stroke-width='28' stroke-linejoin='round'/><path d='M106 235 C162 205, 227 180, 256 180 C285 180, 350 205, 406 235' fill='none' stroke='%23D4AF37' stroke-width='28' stroke-linecap='round'/><path d='M106 375 C162 340, 227 320, 256 320 C285 320, 350 340, 406 375 L406 410 C350 380, 285 360, 256 360 C227 360, 162 380, 106 410 Z' fill='%23D4AF37'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
